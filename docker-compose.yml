@@ -7,6 +7,9 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      # Абсолютный путь = БД пишется прямо в volume (а не в /app/prisma/data внутри контейнера)
+      - DATABASE_URL=file:/app/data/dev.db
     volumes:
       - kb_data:/app/data
     restart: unless-stopped

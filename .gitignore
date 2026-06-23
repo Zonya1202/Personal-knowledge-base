@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# рабочие файлы (планы, скриншоты UI-ревью) — не нужны в репозитории
+/tmp/

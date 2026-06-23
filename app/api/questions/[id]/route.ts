@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { questionSchema, reviewSchema } from "@/lib/validation";
+import { questionSchema, patchSchema } from "@/lib/validation";
+import { MAX_LEVEL } from "@/lib/types";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -36,10 +37,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
   return NextResponse.json({ ok: true });
 }
 
+function nextLevel(current: number, grade: "know" | "unsure" | "dont_know") {
+  if (grade === "know") return Math.min(MAX_LEVEL, current + 1);
+  if (grade === "unsure") return Math.max(0, current - 1);
+  return 0; // dont_know
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const body = await request.json();
-  const parsed = reviewSchema.safeParse(body);
+  const parsed = patchSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -54,18 +61,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Вопрос не найден" }, { status: 404 });
   }
 
-  const knowIncrement = parsed.data.grade === "know" ? 1 : 0;
-  const unsureIncrement = parsed.data.grade === "unsure" ? 1 : 0;
-  const dontKnowIncrement = parsed.data.grade === "dont_know" ? 1 : 0;
+  const level =
+    parsed.data.action === "reset" ? 0 : nextLevel(existing.level, parsed.data.grade);
 
   const question = await prisma.question.update({
     where: { id },
-    data: {
-      lastReviewedAt: new Date(),
-      knowCount: { increment: knowIncrement },
-      unsureCount: { increment: unsureIncrement },
-      dontKnowCount: { increment: dontKnowIncrement },
-    },
+    data: { level },
   });
 
   return NextResponse.json({ question });

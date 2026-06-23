@@ -5,16 +5,9 @@ export type Question = {
   subtopic: string;
   question: string;
   answer: string;
+  level: number;
   createdAt: string;
   updatedAt: string;
-  lastReviewedAt: string | null;
-  nextReviewAt: string;
-  intervalDays: number;
-  repetition: number;
-  easeFactor: number;
-  knowCount: number;
-  unsureCount: number;
-  dontKnowCount: number;
 };
 
 export type QuestionsResponse = {
@@ -22,3 +15,5 @@ export type QuestionsResponse = {
   professions: string[];
   totalCount: number;
 };
+
+export const MAX_LEVEL = 5;

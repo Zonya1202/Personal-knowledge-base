@@ -8,9 +8,21 @@ export const questionSchema = z.object({
   answer: z.string().trim().min(3, "Ответ слишком короткий"),
 });
 
-export const reviewSchema = z.object({
-  grade: z.enum(["know", "unsure", "dont_know"]),
+export const patchSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("review"), grade: z.enum(["know", "unsure", "dont_know"]) }),
+  z.object({ action: z.literal("reset") }),
+]);
+
+export const importSchema = z.object({
+  version: z.literal(1),
+  questions: z.array(
+    questionSchema.extend({
+      id: z.string().min(1),
+      level: z.number().int().min(0).max(5).optional(),
+    })
+  ),
 });
 
 export type QuestionInput = z.infer<typeof questionSchema>;
-export type ReviewInput = z.infer<typeof reviewSchema>;
+export type PatchInput = z.infer<typeof patchSchema>;
+export type ImportInput = z.infer<typeof importSchema>;

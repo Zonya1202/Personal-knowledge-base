@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { questionSchema } from "@/lib/validation";
+import { readJson } from "@/lib/http";
 
 export async function GET() {
   const questions = await prisma.question.findMany({
@@ -19,8 +20,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const parsed = questionSchema.safeParse(body);
+  const json = await readJson(request);
+  if ("response" in json) return json.response;
+  const parsed = questionSchema.safeParse(json.data);
 
   if (!parsed.success) {
     return NextResponse.json(

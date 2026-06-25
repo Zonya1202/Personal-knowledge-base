@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { questionSchema, patchSchema } from "@/lib/validation";
 import { MAX_LEVEL } from "@/lib/types";
+import { readJson, isRecordNotFound } from "@/lib/http";
+
+const notFound = () => NextResponse.json({ error: "Вопрос не найден" }, { status: 404 });
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -9,8 +12,9 @@ type RouteContext = {
 
 export async function PUT(request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const body = await request.json();
-  const parsed = questionSchema.safeParse(body);
+  const json = await readJson(request);
+  if ("response" in json) return json.response;
+  const parsed = questionSchema.safeParse(json.data);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -19,22 +23,28 @@ export async function PUT(request: Request, context: RouteContext) {
     );
   }
 
-  const question = await prisma.question.update({
-    where: { id },
-    data: parsed.data,
-  });
-
-  return NextResponse.json({ question });
+  try {
+    const question = await prisma.question.update({
+      where: { id },
+      data: parsed.data,
+    });
+    return NextResponse.json({ question });
+  } catch (error) {
+    if (isRecordNotFound(error)) return notFound();
+    throw error;
+  }
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
 
-  await prisma.question.delete({
-    where: { id },
-  });
-
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.question.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (isRecordNotFound(error)) return notFound();
+    throw error;
+  }
 }
 
 function nextLevel(current: number, grade: "know" | "unsure" | "dont_know") {
@@ -45,8 +55,9 @@ function nextLevel(current: number, grade: "know" | "unsure" | "dont_know") {
 
 export async function PATCH(request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const body = await request.json();
-  const parsed = patchSchema.safeParse(body);
+  const json = await readJson(request);
+  if ("response" in json) return json.response;
+  const parsed = patchSchema.safeParse(json.data);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -58,7 +69,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const existing = await prisma.question.findUnique({ where: { id } });
 
   if (!existing) {
-    return NextResponse.json({ error: "Вопрос не найден" }, { status: 404 });
+    return notFound();
   }
 
   const level =

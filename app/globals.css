@@ -32,6 +32,16 @@ button {
   cursor: pointer;
 }
 
+/* iOS Safari зумит экран при фокусе на поле со шрифтом меньше 16px.
+   На тач-устройствах поднимаем поля ввода до 16px — зум при тапе пропадает. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 ::selection {
   background: rgba(244, 244, 245, 0.18);
 }

@@ -1045,7 +1045,7 @@ function ComboBox({
         <div className="flex gap-2">
           <input
             value={value}
-            autoFocus
+            autoFocus={creating}
             placeholder="Новое значение"
             onChange={(event) => onChange(event.target.value)}
             className="flex-1 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-300/40"
